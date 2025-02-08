@@ -18,7 +18,7 @@ public class CGrid3D : MonoBehaviour
 
     public Vector3Int WorldToCell(Vector3 worldPos)
     {
-        Vector3 fixedPos = worldPos + 0.5f * m_grid.cellSize; //加cell尺寸的一半来修正
+        Vector3 fixedPos = worldPos + 0.49f * m_grid.cellSize; //加cell尺寸的一半来修正
         return m_grid.WorldToCell(fixedPos);
     }
 }

@@ -7,11 +7,13 @@ namespace MessageInfo
     {
         public float panX;
         public float panY;
-        public float tiltX;
-        public float tiltY;
+        //public float tiltX;
+        //public float tiltY;
         public float zoom;
         public bool bFocus;
         public Vector3 vFocus;
+        public int rotateDir;   //>1 À≥ ±’Î <1ƒÊ ±’Î
+        public float deltaTime;
     }
     public class CellPosition
     {
@@ -22,7 +24,8 @@ public enum EMessageType
 {
     SetActiveCellPosition = 0, //Vector3
     CameraPTZF,           //MessageInfo.CameraPTZFInfo
-    GetFocusCellPosition    //MessageInfo.CellPosition
+    GetFocusCellPosition,    //MessageInfo.CellPosition
+    SetSelectedEntity,
 }
 public interface IPipe
 {
@@ -37,15 +40,20 @@ public class GameDirector : MonoBehaviour
     [SerializeField]
     CCameraManager cameraMgr;
 
+    CStateManager stateMgr;
+
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
         logMgr = gameObject.AddComponent<CLogManager>();
         levelMgr = gameObject.AddComponent<CLevelManager>();
         inputMgr = gameObject.AddComponent<CInputManager>();
+        stateMgr = gameObject.AddComponent<CStateManager>();
 
         inputMgr.m_pipeLevel = levelMgr;
         inputMgr.m_pipeCamera = cameraMgr;
+
+        CStateManager.CurrentState = CStateManager.EState.Start;
     }
 
     // Update is called once per frame

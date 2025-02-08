@@ -10,7 +10,7 @@ public class CLevelManager : MonoBehaviour, IPipe
     public struct CActionInfo : IComparable<CActionInfo>
     {
         public int m_turn;
-        public CEntity m_obj;
+        public CCharacter m_obj;
 
         public int CompareTo(CActionInfo other)
         {
@@ -29,14 +29,43 @@ public class CLevelManager : MonoBehaviour, IPipe
     public int m_x;
     public int m_z;
 
-    public CTerrainCell[,] m_gridList;
-    public List<CEntity> m_entityList;
+    public CTerrainEntity[,] m_gridList;
+    public List<CCharacter> m_entityList;
     public PriorityQueue<CActionInfo> m_actionQueue;
 
     static public CGrid3D m_grid;
 
-    public CEntity hero;
+    public CCharacter hero;
 
+    static CEntity m_selectedEntity; //选中的对象
+    static public CEntity M_selectedEntity
+    {
+        get { return m_selectedEntity; }
+        set
+        {
+            value.OnSelected();
+            m_selectedEntity = value;
+        }
+    }
+
+    static CCharacter m_ActiveEntity; //行动的对象
+    static public CCharacter M_ActiveEntity
+    {
+        get { return m_ActiveEntity; }
+        set
+        {
+            //value.OnActive();
+            if (value == null)
+            {
+                CLogManager.AddLog("现在没有人行动");
+            }
+            else
+            {
+                CLogManager.AddLog($"现在{value.m_name}开始行动了");
+            }
+            m_ActiveEntity = value;
+        }
+    }
     void Start()
     {
         initmat_test1();
@@ -52,7 +81,7 @@ public class CLevelManager : MonoBehaviour, IPipe
         m_terrain.generateGrids(info, out m_gridList);
 
         //init character
-        m_entityList = new List<CEntity>();
+        m_entityList = new List<CCharacter>();
         m_actionQueue = new PriorityQueue<CActionInfo>();
 
         Init_test1();
@@ -74,18 +103,22 @@ public class CLevelManager : MonoBehaviour, IPipe
     }
     void Init_test1()
     {
-        hero = GameObject.Find("testCharacter").GetComponent<CEntity>();
-        CEntity zhongzi = hero;
+        hero = GameObject.Find("testCharacter").GetComponent<CCharacter>();
+        CCharacter zhongzi = hero;
         zhongzi.m_name = "妙蛙种子";
         zhongzi.m_Hp = 16;
         zhongzi.m_dexterity = 5;
         zhongzi.m_moveList.Add(new CTackle()); //改工厂模式
         zhongzi.m_type1 = EType.Grass;
         zhongzi.m_type2 = EType.Poison;
+        zhongzi.m_APRepo.UpdateRepoFull(EActPoint.Movement, 10);
+
         zhongzi.Spawn(new Vector3Int(1, 0, 1));
         zhongzi.m_Pos = new Vector3Int(1, 1, 1);
+        zhongzi.M_state = CCharacter.EState.Act_Disabled;
 
-        CEntity huolong = new CEntity();
+
+        CCharacter huolong = new CCharacter();
         huolong.m_name = "小火龙";
         huolong.m_Hp = 13;
         huolong.m_dexterity = 6;
@@ -97,7 +130,7 @@ public class CLevelManager : MonoBehaviour, IPipe
         m_entityList.Add(zhongzi);
         m_entityList.Add(huolong);
 
-        foreach (CEntity item in m_entityList)
+        foreach (CCharacter item in m_entityList)
         {
             CActionInfo info = new CActionInfo();
             info.m_obj = item;
@@ -147,24 +180,48 @@ public class CLevelManager : MonoBehaviour, IPipe
 
     public void TransferData(EMessageType type, object info)
     {
-        if(type == EMessageType.SetActiveCellPosition)
+        if (type == EMessageType.SetActiveCellPosition)
         {
             Vector3? worldPos = info as Vector3?;
-            
+
             if (!worldPos.HasValue) return; //改返回值
             m_terrain.M_focusPos = m_grid.WorldToCell((Vector3)worldPos);
         }
-        else if(type == EMessageType.GetFocusCellPosition)
+        else if (type == EMessageType.GetFocusCellPosition)
         {
             if (!(info is MessageInfo.CellPosition))
             {
-                CLogManager.AddLog("leixingcuowu");
+                CLogManager.AddLog("EMessageType.GetFocusCellPosition error info type", CLogManager.ELogLevel.Error);
                 return;
             }
             MessageInfo.CellPosition cellPos = (MessageInfo.CellPosition)info;
             cellPos.pos = m_grid.CellToWorld(hero.m_Pos);
 
 
+        }
+        else if (type == EMessageType.SetSelectedEntity)
+        {
+            if (!(info is CEntity))
+            {
+                CLogManager.AddLog("EMessageType.SetSelectedEntity error info type", CLogManager.ELogLevel.Error);
+                return;
+            }
+            M_selectedEntity = (CEntity)info;
+            if (CStateManager.CurrentState != CStateManager.EState.MyTeamAct)
+            {
+                if (M_selectedEntity is CCharacter && ((CCharacter)M_selectedEntity).m_team == 0)
+                {
+                    CStateManager.CurrentState = CStateManager.EState.MyTeamAct;
+                    M_ActiveEntity = (CCharacter)M_selectedEntity;
+                }
+            }
+            else
+            {
+                if (M_selectedEntity is CTerrainEntity && ((CTerrainEntity)M_selectedEntity).m_standable == 1)
+                {
+                    M_ActiveEntity.m_Pos = ((CTerrainEntity)M_selectedEntity).m_Pos + Vector3Int.up;
+                }
+            }
         }
         
     }

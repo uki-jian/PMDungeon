@@ -2,8 +2,8 @@ using UnityEngine;
 
 public class testBasic : MonoBehaviour
 {
-    public CEntity zhongzi;
-    public CEntity huolong;
+    public CCharacter zhongzi;
+    public CCharacter huolong;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {

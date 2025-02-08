@@ -17,7 +17,7 @@ public enum EMove
 
 public interface IMove
 {
-    void OnAttack(CEntity src, CEntity dst, CMoveExtraInfo info);
+    void OnAttack(CCharacter src, CCharacter dst, CMoveExtraInfo info);
 }
 public class CMove
 {
@@ -53,7 +53,7 @@ public static class CRangeList
 
 public class CTackle : CMove, IMove
 {
-    public void OnAttack(CEntity src, CEntity dst, CMoveExtraInfo info)
+    public void OnAttack(CCharacter src, CCharacter dst, CMoveExtraInfo info)
     {
         dst.m_Hp -= m_power;
         CLogManager.AddLog($"{src.m_name}使用了{m_name}，{dst.m_name}受到了{m_power}点伤害，剩余{dst.m_Hp}HP！");
@@ -65,7 +65,7 @@ public class CTackle : CMove, IMove
 }
 public class CEmber : CMove, IMove
 {
-    public void OnAttack(CEntity src, CEntity dst, CMoveExtraInfo info)
+    public void OnAttack(CCharacter src, CCharacter dst, CMoveExtraInfo info)
     {
         dst.m_Hp -= m_power;
         CLogManager.AddLog($"{src.m_name}使用了{m_name}，{dst.m_name}受到了{m_power}点伤害，剩余{dst.m_Hp}HP！");

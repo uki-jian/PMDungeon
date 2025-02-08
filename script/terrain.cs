@@ -39,7 +39,7 @@ public class CTerrain
         {
             //if(value.x < 0)
             m_focusPos = value;
-            CLogManager.AddLog($"选择了位置({m_focusPos.x},{m_focusPos.y},{m_focusPos.z})");
+            CLogManager.AddLog($"选择了位置({m_focusPos.x},{m_focusPos.y},{m_focusPos.z})", CLogManager.ELogLevel.Debug);
         }
     }
 
@@ -48,16 +48,16 @@ public class CTerrain
         m_materialList = materialList;
         m_spriteList = spriteList;
 
-        m_focusPos = new Vector3Int(0, 0, 0);
+        m_focusPos = Vector3Int.zero;
     }
 
-    public void generateGrids(CTerrainInfo info, out CTerrainCell[,] gridList)
+    public void generateGrids(CTerrainInfo info, out CTerrainEntity [,] gridList)
     {
         int width = info.m_size_x, height = info.m_size_z;
         float PNxStart = 10f, PNzStart = 10f;
         float PNxSampleRate = 16f, PNzSampleRate = 16f;
         float yMin = 0f, yMax = 15f, yStage = 0.333f;
-        gridList = new CTerrainCell [width, height];
+        gridList = new CTerrainEntity  [width, height];
         for(int x=0; x<width; x++)
         {
             for(int z=0; z<height; z++)
@@ -77,8 +77,11 @@ public class CTerrain
                 
                 for(int i= 0/*Mathf.FloorToInt(yMin)*/; i<= 0/*Mathf.FloorToInt(y)*/; i++)
                 {
-                    CTerrainCell grid = new CTerrainCell(material, slicedSprite);
-                    Vector3 worldPosition = CLevelManager.m_grid.CellToWorld(new Vector3Int(x, i, z));
+                    GameObject instance = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                    CTerrainEntity grid = instance.AddComponent<CTerrainEntity>();
+                    Vector3Int cellPos = new Vector3Int(x, i, z);
+                    Vector3 worldPosition = CLevelManager.m_grid.CellToWorld(cellPos);
+                    grid.init(material, slicedSprite, cellPos);
                     grid.Spawn(worldPosition);
                 }
                 
@@ -91,23 +94,20 @@ public class CTerrain
     }
 }
 
-public class CTerrainCell
+public class CTerrainEntity : CEntity
 {
     public Material m_material;
     public Sprite m_slicedSprite;
-    public GameObject m_instance;
-    public CTerrainCell(Material material, Sprite slicedSprite)
+    public void init (Material material, Sprite slicedSprite, Vector3Int cellPos)
     {
         m_material = material;
         m_slicedSprite = slicedSprite;
+        m_pos = cellPos;
     }
     public void Spawn(Vector3 position)
     {
-        // 创建一个新的立方体游戏对象
-        m_instance = GameObject.CreatePrimitive(PrimitiveType.Cube);
-
         // 获取立方体的MeshRenderer组件，用于渲染立方体
-        MeshRenderer meshRenderer = m_instance.GetComponent<MeshRenderer>();
+        MeshRenderer meshRenderer = gameObject.GetComponent<MeshRenderer>();
 
         // 创建一个新的材质
         //Material material = new Material(Shader.Find("Standard"));
@@ -123,7 +123,7 @@ public class CTerrainCell
         uv[2] = new Vector2(uvRect.xMax / texture.width, uvRect.yMax / texture.height);
         uv[3] = new Vector2(uvRect.xMin / texture.width, uvRect.yMax / texture.height);
         //for (int i = 0; i < 4; i++) Debug.Log(uv[i]);
-        MeshFilter meshFilter = m_instance.GetComponent<MeshFilter>();
+        MeshFilter meshFilter = gameObject.GetComponent<MeshFilter>();
         Mesh mesh = meshFilter.mesh;
 
         // 立方体每个面的顶点索引
@@ -168,10 +168,31 @@ public class CTerrainCell
         meshRenderer.material = m_material;
 
         // 设置立方体的位置
-        m_instance.transform.position = position;
-        m_instance.transform.localScale = new Vector3(1f, 1f, 1f);
+        gameObject.transform.position = position;
+        gameObject.transform.localScale = new Vector3(1f, 1f, 1f);
         //cube.transform.rotation = Quaternion.Euler(new Vector3(45, 45, 45));
     }
-    
+
+    int m_x, m_z;
+    int m_y;
+    int m_character;
+    List<int> m_effects;
+    int m_moveCost;
+    public int m_standable;
+    [SerializeField]
+    private Vector3Int m_pos;
+    public Vector3Int m_Pos
+    {
+        get{ return m_pos; }
+    }
+    //pu
+    private void Start()
+    {
+        m_standable = 1;
+    }
+    public override void OnSelected()
+    {
+        CLogManager.AddLog($"选择了{gameObject.name}", CLogManager.ELogLevel.Debug);
+    }
 }
 

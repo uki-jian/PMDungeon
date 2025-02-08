@@ -19,7 +19,7 @@ public abstract class CEffect
     protected EEffect m_id { get; set; }
     protected string m_name { get; set; }
     protected int m_remain_turn { get; set; }
-    protected CEntity m_obj { get; set; }
+    protected CCharacter m_obj { get; set; }
 }
 public class CBurn : CEffect, IEffect
 {
@@ -59,7 +59,7 @@ public class CBurn : CEffect, IEffect
     {
         m_remain_turn = 3;
     }
-    public CBurn(CEntity obj)
+    public CBurn(CCharacter obj)
     {
         m_id = EEffect.Burn;
         m_name = "»º…’";

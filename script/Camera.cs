@@ -3,13 +3,15 @@ using UnityEngine;
 public class CCameraManager : MonoBehaviour, IPipe
 {
     // 相机移动速度
-    public float moveSpeed = 5f;
+    public float m_moveSpeed = 80f;
     // 相机旋转速度
-    public float rotateSpeed = 2f;
+    public float m_rotateSpeed = 2f;
     // 相机缩放速度
-    public float zoomSpeed = 5f;
+    public float m_zoomSpeed = 50f;
     // 平滑时间
-    public float smoothTime = 0.1f;
+    public float m_smoothTime = 0.1f;
+    // 默认相机高度
+    public float m_defaultCameraHeight = 5f;
 
     private Vector3 moveVelocity;
     private Vector3 zoomVelocity;
@@ -21,37 +23,39 @@ public class CCameraManager : MonoBehaviour, IPipe
         Focus(new Vector3(7f, 0f, 7f));
     }
 
-    void Pan(float x, float y)
+    void Pan(float x, float z)
     {
-        Vector3 moveDirection = (transform.right * x + transform.forward * y).normalized;
-        Vector3 targetMovePosition = transform.position + moveDirection * moveSpeed * Time.deltaTime;
-        transform.position = Vector3.SmoothDamp(transform.position, targetMovePosition, ref moveVelocity, smoothTime);
+        Vector3 moveDirection = (Vector3.right * x + Vector3.forward * z).normalized;
+        Vector3 targetMovePosition = transform.position + moveDirection * m_moveSpeed * Time.deltaTime;
+        transform.position = Vector3.SmoothDamp(transform.position, targetMovePosition, ref moveVelocity, m_smoothTime);
     }
     void Tilt(float x, float y)
     {
-        targetRotation *= Quaternion.Euler(-y * rotateSpeed, x * rotateSpeed, 0f);
-        transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, smoothTime);
+        targetRotation *= Quaternion.Euler(0f/*-y * m_rotateSpeed*/, x * m_rotateSpeed * Time.deltaTime, 0f);
+        transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, m_smoothTime);
     }
     void Zoom(float z)
     {
-        Vector3 targetPosition = transform.position + transform.forward * z * zoomSpeed;
-        transform.position = Vector3.SmoothDamp(transform.position, targetPosition, ref zoomVelocity, smoothTime);
+        Vector3 targetPosition = transform.position + transform.forward * z * m_zoomSpeed * Time.deltaTime;
+        transform.position = Vector3.SmoothDamp(transform.position, targetPosition, ref zoomVelocity, m_smoothTime);
     }
     void Focus(Vector3 targetPosition)
     {
-        // 获取相机的前向向量
         Vector3 cameraForward = transform.forward;
-        // 计算相机到目标位置的向量
         Vector3 directionToTarget = targetPosition - transform.position;
 
-        // 计算相机到目标位置在相机前向向量上的投影距离
-        float distance = Vector3.Dot(directionToTarget, cameraForward);
+        Vector3 newPosition = targetPosition - cameraForward * m_defaultCameraHeight;
 
-        // 计算相机应该移动到的新位置
-        Vector3 newPosition = targetPosition - cameraForward * distance;
-
-        // 设置相机的新位置
         transform.position = newPosition;
+    }
+    void FocusRotate(Vector3 axis, Vector3 targetPosition)
+    {
+        float originalY = transform.position.y;
+
+        transform.RotateAround(targetPosition, axis, m_rotateSpeed * Time.deltaTime);
+
+        // 恢复相机的 Y 坐标，确保高度不变
+        //transform.position = new Vector3(transform.position.x, originalY, transform.position.z);
     }
     void Update()
     {
@@ -63,11 +67,16 @@ public class CCameraManager : MonoBehaviour, IPipe
         if (type == EMessageType.CameraPTZF)
         {
             Pan(((MessageInfo.CameraPTZFInfo)info).panX, ((MessageInfo.CameraPTZFInfo)info).panY);
-            Tilt(((MessageInfo.CameraPTZFInfo)info).tiltX, ((MessageInfo.CameraPTZFInfo)info).tiltY);
+            //Tilt(((MessageInfo.CameraPTZFInfo)info).tiltX, ((MessageInfo.CameraPTZFInfo)info).tiltY);
             Zoom(((MessageInfo.CameraPTZFInfo)info).zoom);
             if(((MessageInfo.CameraPTZFInfo)info).bFocus)
             {
                 Focus(((MessageInfo.CameraPTZFInfo)info).vFocus);
+            }
+            if(((MessageInfo.CameraPTZFInfo)info).rotateDir != 0)
+            {
+
+                FocusRotate(((MessageInfo.CameraPTZFInfo)info).rotateDir * Vector3.up, ((MessageInfo.CameraPTZFInfo)info).vFocus);
             }
         }
 
