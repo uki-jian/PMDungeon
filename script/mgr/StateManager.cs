@@ -46,7 +46,7 @@ public class CStateManager : MonoBehaviour //special
             }
             if (stateMap[currentState].Contains(value))
             {
-                CLogManager.AddLog($"从{currentState}转换到{value}状态", CLogManager.ELogLevel.Debug);
+                CLogManager.AddLog($"从{currentState}{value}状态", CLogManager.ELogLevel.Debug);
                 Transit(currentState, value);
                 currentState = value;
             }
