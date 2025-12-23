@@ -14,14 +14,6 @@ public class PriorityQueue<T> where T : IComparable<T>
         heap = new List<T>();
     }
 
-    public void EnqueueWithList(List<T> list)
-    {
-        foreach(T item in list)
-        {
-            Enqueue(item);
-        }
-    }
-
     // 入队操作
     public void Enqueue(T item)
     {
@@ -81,13 +73,31 @@ public class PriorityQueue<T> where T : IComparable<T>
     {
         return Count == 0;
     }
-    // 获取队列中元素的数量
+
+    public T GetItem(int index)
+    {
+        if (index >= heap.Count) return default(T);
+        return heap[index];
+    }
+    public int GetIndex(T item)
+    {
+        return heap.IndexOf(item); //-1 for not found
+    }
+    
+    public T Top
+    {
+        get
+        {
+            if (heap.Count == 0) return default(T);
+            return heap[0];
+        }
+    }
     public int Count
     {
         get { return heap.Count; }
     }
 
-    // 交换两个元素的位置
+
     private void Swap(int index1, int index2)
     {
         T temp = heap[index1];

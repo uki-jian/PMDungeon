@@ -1,4 +1,5 @@
 using UnityEngine;
+using System;
 
 public class CCameraManager : MonoBehaviour, IPipe
 {
@@ -20,13 +21,15 @@ public class CCameraManager : MonoBehaviour, IPipe
     void Start()
     {
         targetRotation = transform.rotation;
-        Focus(new Vector3(7f, 0f, 7f));
+        Focus(new Vector3(5f, 1f, 0f));
     }
 
     void Pan(float x, float z)
     {
-        Vector3 moveDirection = (Vector3.right * x + Vector3.forward * z).normalized;
-        Vector3 targetMovePosition = transform.position + moveDirection * m_moveSpeed * Time.deltaTime;
+        //Vector3 moveDirection = (Vector3.right * x + Vector3.forward * z).normalized;
+        Vector3 movement = (transform.right * x + transform.forward * z) * m_moveSpeed * Time.deltaTime;
+        movement.y = 0f;
+        Vector3 targetMovePosition = transform.position + movement;
         transform.position = Vector3.SmoothDamp(transform.position, targetMovePosition, ref moveVelocity, m_smoothTime);
     }
     void Tilt(float x, float y)
@@ -48,11 +51,37 @@ public class CCameraManager : MonoBehaviour, IPipe
 
         transform.position = newPosition;
     }
-    void FocusRotate(Vector3 axis, Vector3 targetPosition)
+    void FocusRotate(int rotateDir)
     {
-        float originalY = transform.position.y;
+        Vector3 axis = Vector3.up;
+        Vector3 targetPosition;
+        Ray ray = new Ray(transform.position , transform.forward);
+        RaycastHit hit;
+        if (Physics.Raycast(ray, out hit))
+        {
+            targetPosition = hit.point;
+            //Debug.Log("交点位置: " + targetPosition);
+        }
+        else
+        {
+            Func<float, Vector3> GetIntersectionPointWithPlane = (y) =>
+            {
+                Vector3 origin = ray.origin;
+                // 射线的方向向量
+                Vector3 direction = ray.direction;
 
-        transform.RotateAround(targetPosition, axis, m_rotateSpeed * Time.deltaTime);
+                // 计算参数 t
+                float t = (y - origin.y) / direction.y;
+
+                // 计算交点坐标
+                Vector3 intersection = origin + t * direction;
+
+                return intersection;
+            };
+            targetPosition = GetIntersectionPointWithPlane(1f);
+            //Debug.Log("射线未与物体相交" + targetPosition);
+        }
+        transform.RotateAround(targetPosition, axis * rotateDir, m_rotateSpeed * Time.deltaTime);
 
         // 恢复相机的 Y 坐标，确保高度不变
         //transform.position = new Vector3(transform.position.x, originalY, transform.position.z);
@@ -75,8 +104,7 @@ public class CCameraManager : MonoBehaviour, IPipe
             }
             if(((MessageInfo.CameraPTZFInfo)info).rotateDir != 0)
             {
-
-                FocusRotate(((MessageInfo.CameraPTZFInfo)info).rotateDir * Vector3.up, ((MessageInfo.CameraPTZFInfo)info).vFocus);
+                FocusRotate(((MessageInfo.CameraPTZFInfo)info).rotateDir);
             }
         }
 

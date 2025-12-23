@@ -1,108 +1,133 @@
 using UnityEngine;
 using System.Collections.Generic;
 
-enum ETerrainType
-{
-    TerrainType_Void = 0,
-    TerrainType_Plain = 1,
-    TerrainType_River = 2,
-    TerrainType_Mount
-}
-public class CTerrain
-{
-    public struct CTerrainInfo
-    {
-        public int m_size_x;
-        public int m_size_z;
-
-        public CTerrainInfo(int size_x=16, int size_z=16)
-        {
-            m_size_x = size_x;
-            m_size_z = size_z;
-        }
-    }
-    List<Material> m_materialList;
-    List<Sprite> m_spriteList;
-
-    public Vector3Int m_minPos;
-    public Vector3Int m_maxPos;
-
-    Vector3Int m_focusPos;
-
-    public Vector3Int M_focusPos
-    {
-        get
-        {
-            return m_focusPos;
-        }
-        set
-        {
-            //if(value.x < 0)
-            m_focusPos = value;
-            CLogManager.AddLog($"选择了位置({m_focusPos.x},{m_focusPos.y},{m_focusPos.z})", CLogManager.ELogLevel.Debug);
-        }
-    }
-
-    public CTerrain(List<Material> materialList, List<Sprite> spriteList)
-    {
-        m_materialList = materialList;
-        m_spriteList = spriteList;
-
-        m_focusPos = Vector3Int.zero;
-    }
-
-    public void generateGrids(CTerrainInfo info, out CTerrainEntity [,] gridList)
-    {
-        int width = info.m_size_x, height = info.m_size_z;
-        float PNxStart = 10f, PNzStart = 10f;
-        float PNxSampleRate = 16f, PNzSampleRate = 16f;
-        float yMin = 0f, yMax = 15f, yStage = 0.333f;
-        gridList = new CTerrainEntity  [width, height];
-        for(int x=0; x<width; x++)
-        {
-            for(int z=0; z<height; z++)
-            {   
-                float yOrigin = (float)PerlinNoise2D.Noise(PNxStart + (width/PNxSampleRate) / (width - 1) * x, PNzStart + (height/PNzSampleRate) / (height - 1) * z); //0-1
-                int stage = (int)(yOrigin * (yMax - yMin) / yStage);
-                float y = yMin + stage * yStage;
-
-                ETerrainType terrainType = ETerrainType.TerrainType_Void;
-                if (y >= 0.70 * yMax) terrainType = ETerrainType.TerrainType_Mount;
-                else if (y >= 0.30 * yMax) terrainType = ETerrainType.TerrainType_Plain;
-                else terrainType = ETerrainType.TerrainType_River;
-
-                Material material = m_materialList[(int)terrainType];
-                Sprite slicedSprite = m_spriteList[(int)terrainType];
-
-                
-                for(int i= 0/*Mathf.FloorToInt(yMin)*/; i<= 0/*Mathf.FloorToInt(y)*/; i++)
-                {
-                    GameObject instance = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                    CTerrainEntity grid = instance.AddComponent<CTerrainEntity>();
-                    Vector3Int cellPos = new Vector3Int(x, i, z);
-                    Vector3 worldPosition = CLevelManager.m_grid.CellToWorld(cellPos);
-                    grid.init(material, slicedSprite, cellPos);
-                    grid.Spawn(worldPosition);
-                }
-                
-            }
-        }
-        
-
-        
-        
-    }
-}
-
 public class CTerrainEntity : CEntity
 {
-    public Material m_material;
-    public Sprite m_slicedSprite;
-    public void init (Material material, Sprite slicedSprite, Vector3Int cellPos)
+    [SerializeField]
+    private Vector3Int m_pos;
+    public override Vector3Int Pos
     {
+        get { return m_pos; }
+        set { m_pos = value; }
+    }
+
+    CStatusRepo m_statusRepo;
+    public CStatusRepo StatusRepo { get { return m_statusRepo; } }
+    [SerializeField]
+    int m_moveCost = 1; //-1 for unstandable
+    public int MovingCost { get { return m_moveCost; } set { m_moveCost = value; } }
+
+    Material m_material;
+    Sprite m_slicedSprite;
+    class CGridSlice
+    {
+        GameObject m_obj;
+        uint m_status;
+        public void Init(GameObject prefab, Transform transform)
+        {
+            m_status = 0;
+            m_obj = Instantiate(prefab);
+            m_obj.transform.SetParent(transform);
+            m_obj.transform.localPosition = pos_offset;
+            m_obj.transform.localScale = scale;
+            m_obj.SetActive(true); //debug
+        }
+        public void Render()
+        {
+            Color color = Color_Common;
+            //顺序决定显示的颜色
+            do
+            {
+                if ((m_status & (uint)ETerrainStatus.Attackarea) > 0)
+                { color = Color_AttackArea; break; }
+
+                if ((m_status & (uint)ETerrainStatus.Attackable) > 0)
+                { color = Color_AttackAble; break; }
+
+                if ((m_status & (uint)ETerrainStatus.Moveable) > 0)
+                { color = Color_Moveable; break; }
+
+                if ((m_status & (uint)ETerrainStatus.Myteam) > 0)
+                { color = Color_MyTeam; break; }
+
+                if ((m_status & (uint)ETerrainStatus.Allay) > 0)
+                { color = Color_Allay; break; }
+
+                if ((m_status & (uint)ETerrainStatus.Enemy) > 0)
+                { color = Color_Enemy; break; }
+
+                if ((m_status & (uint)ETerrainStatus.Common) > 0)
+                { color = Color_Common; break; }
+            } while (false);
+
+            m_obj.GetComponent<MeshRenderer>().material.color = color;
+        }
+        public void AddStatus(ETerrainStatus status)
+        {
+            m_status |= (uint)status;
+            Render();
+        }
+        public void RemoveStatus(ETerrainStatus status)
+        {
+            m_status &= ~(uint)status;
+            Render();
+        }
+        public bool HasStatus(ETerrainStatus status)
+        {
+            return (m_status & (uint)status) > 0;
+        }
+        public void Show()
+        {
+            m_obj.SetActive(true);
+        }
+        public void Hide()
+        {
+            m_obj.SetActive(false);
+        }
+        static Vector3 pos_offset = new Vector3(0f, 0.6f, 0f);
+        static Vector3 scale = new Vector3(0.9f, 0.05f, 0.9f);
+        static public Color Color_Common = new Color32(0, 117, 255, 175);
+        static public Color Color_MyTeam = new Color32(39, 255, 0, 175);
+        static public Color Color_Allay = new Color32();
+        static public Color Color_Enemy = new Color32(255, 0, 0, 175);
+        static public Color Color_Moveable = new Color(1f, 0f, 0.9289f, 0.6862f);
+        static public Color Color_AttackAble = new Color32(230, 255, 0, 175);
+        static public Color Color_AttackArea = new Color32(230, 0, 255, 175);
+    }
+    public enum ETerrainStatus
+    {
+        Common = 1 << 1,
+        Myteam = 1 << 2,
+        Allay = 1 << 3,
+        Enemy = 1 << 4,
+        Moveable = 1 << 5,
+        Attackable = 1 << 6,
+        Attackarea = 1 << 7,
+    }
+
+    CGridSlice m_gridSlice;
+
+    CCharacter m_characterOn;
+    public CCharacter CharacterOn
+    {
+        get { return m_characterOn; }
+        set
+        {
+            //if (value) CLogManager.AddLog($"{value.Name}在({m_pos.x},{m_pos.z})");
+            //else CLogManager.AddLog($"{m_characterOn.Name}离开了({m_pos.x},{m_pos.z})");
+            m_characterOn = value;
+        }
+    }
+
+    public void Init(Material material, Sprite slicedSprite, Vector3Int cellPos)//todo:改用prefab
+    {
+        m_gridSlice = new CGridSlice();
+
         m_material = material;
         m_slicedSprite = slicedSprite;
         m_pos = cellPos;
+        GameObject slice_prefab = Resources.Load<GameObject>("prefab/gridSlice");
+        m_gridSlice.Init(slice_prefab, transform);
     }
     public void Spawn(Vector3 position)
     {
@@ -169,30 +194,36 @@ public class CTerrainEntity : CEntity
 
         // 设置立方体的位置
         gameObject.transform.position = position;
-        gameObject.transform.localScale = new Vector3(1f, 1f, 1f);
+        gameObject.transform.localScale = Vector3.one;
         //cube.transform.rotation = Quaternion.Euler(new Vector3(45, 45, 45));
+        m_gridSlice.AddStatus(ETerrainStatus.Common);
     }
 
-    int m_x, m_z;
-    int m_y;
-    int m_character;
-    List<int> m_effects;
-    int m_moveCost;
-    public int m_standable;
-    [SerializeField]
-    private Vector3Int m_pos;
-    public Vector3Int m_Pos
-    {
-        get{ return m_pos; }
-    }
-    //pu
     private void Start()
     {
-        m_standable = 1;
+        //m_standable = 1;
+        //m_moveCost = 1;
     }
     public override void OnSelected()
     {
-        CLogManager.AddLog($"选择了{gameObject.name}", CLogManager.ELogLevel.Debug);
+        //CLogManager.AddLog($"选择了{gameObject.name}", CLogManager.ELogLevel.Debug);
+    }
+
+    public void AddTerrainStatus(ETerrainStatus status)
+    {
+        m_gridSlice.AddStatus(status);
+    }
+    public void RemoveTerrainStatus(ETerrainStatus status)
+    {
+        m_gridSlice.RemoveStatus(status);
+    }
+    public bool HasTerrainStatus(ETerrainStatus status)
+    {
+        return m_gridSlice.HasStatus(status);
+    }
+    public void UnShowGridSlice()
+    {
+        m_gridSlice.Hide();
     }
 }
 

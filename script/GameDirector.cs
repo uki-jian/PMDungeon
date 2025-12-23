@@ -26,6 +26,7 @@ public enum EMessageType
     CameraPTZF,           //MessageInfo.CameraPTZFInfo
     GetFocusCellPosition,    //MessageInfo.CellPosition
     SetSelectedEntity,
+    HoverEntity,
 }
 public interface IPipe
 {
@@ -34,22 +35,20 @@ public interface IPipe
 }
 public class GameDirector : MonoBehaviour
 {
+    [SerializeField]
     CLogManager logMgr;
+    [SerializeField]
     CLevelManager levelMgr;
+    [SerializeField]
     CInputManager inputMgr;
     [SerializeField]
     CCameraManager cameraMgr;
-
+    [SerializeField]
     CStateManager stateMgr;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        logMgr = gameObject.AddComponent<CLogManager>();
-        levelMgr = gameObject.AddComponent<CLevelManager>();
-        inputMgr = gameObject.AddComponent<CInputManager>();
-        stateMgr = gameObject.AddComponent<CStateManager>();
-
         inputMgr.m_pipeLevel = levelMgr;
         inputMgr.m_pipeCamera = cameraMgr;
 

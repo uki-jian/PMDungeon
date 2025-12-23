@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 public class CInputManager : MonoBehaviour
 {
@@ -11,31 +12,41 @@ public class CInputManager : MonoBehaviour
 
     void Update()
     {
-        if (Input.GetMouseButtonDown(0))
-            do
+        
+        do
+        {
+            RaycastHit hit;
+            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+            if (EventSystem.current.IsPointerOverGameObject()) break; //±»UIµ²×¡
+
+            if (Physics.Raycast(ray, out hit))
             {
-                RaycastHit hit;
-                Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+                //Vector3 worldPos = hit.point;
+                //m_pipeLevel.TransferData(EMessageType.SetActiveCellPosition, worldPos);
 
-                if (Physics.Raycast(ray, out hit))
+                GameObject selectedObject = hit.collider.gameObject;
+                CEntity entity = selectedObject.GetComponent<CEntity>();
+                if (entity == null)
                 {
-                    //Vector3 worldPos = hit.point;
-                    //m_pipeLevel.TransferData(EMessageType.SetActiveCellPosition, worldPos);
-
-                    GameObject selectedObject = hit.collider.gameObject;
-                    CEntity entity = selectedObject.GetComponent<CEntity>();
-                    if (entity == null)
-                    {
-                        CLogManager.AddLog("select a gameobject with no CEntity base", CLogManager.ELogLevel.Warning);
-                        break;
-                    }
-                    m_pipeLevel.TransferData(EMessageType.SetSelectedEntity, entity);
-
+                    CLogManager.AddLog("select a gameobject with no CEntity base", CLogManager.ELogLevel.Warning);
+                    break;
                 }
-            } while (false);
+
+                if (Input.GetMouseButtonDown(0))
+                {
+                    m_pipeLevel.TransferData(EMessageType.SetSelectedEntity, entity);
+                }
+                else
+                {
+                    m_pipeLevel.TransferData(EMessageType.HoverEntity, entity);
+                }
+
+            }
+        } while (false);
 
 
         //camera input
+        do
         {
             MessageInfo.CameraPTZFInfo cameraPTZFInfo = new MessageInfo.CameraPTZFInfo();
 
@@ -68,15 +79,16 @@ public class CInputManager : MonoBehaviour
             if (Input.GetKeyDown(KeyCode.F))
             {
                 cameraPTZFInfo.bFocus = true;
+                MessageInfo.CellPosition cellPos = new MessageInfo.CellPosition();
+                m_pipeLevel.TransferData(EMessageType.GetFocusCellPosition, cellPos);
+                cameraPTZFInfo.vFocus = cellPos.pos;
             }
-            MessageInfo.CellPosition cellPos = new MessageInfo.CellPosition();
-            m_pipeLevel.TransferData(EMessageType.GetFocusCellPosition, cellPos);
-            cameraPTZFInfo.vFocus = cellPos.pos;
+
 
             cameraPTZFInfo.deltaTime = Time.deltaTime;
 
             m_pipeCamera.TransferData(EMessageType.CameraPTZF, cameraPTZFInfo);
-        }
-        
+        } while (false);
+
     }
 }
