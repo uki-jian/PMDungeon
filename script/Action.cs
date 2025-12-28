@@ -140,7 +140,7 @@ public class CActRepo : IActRepo
         }
         else
         {
-            CLogManager.AddLog($"CAPRepo GetPoint cannot find key:{act}", CLogManager.ELogLevel.Error);
+            CLogManager.LogError($"CAPRepo GetPoint cannot find key:{act}");
             return int.MinValue;
         }
     }
@@ -152,7 +152,7 @@ public class CActRepo : IActRepo
         }
         else
         {
-            CLogManager.AddLog($"CAPRepo GetPoint cannot find key:{act}", CLogManager.ELogLevel.Error);
+            CLogManager.LogError($"CAPRepo GetPoint cannot find key:{act}");
             return int.MinValue;
         }
     }
@@ -164,7 +164,7 @@ public class CActRepo : IActRepo
         }
         else
         {
-            CLogManager.AddLog($"CAPRepo GetPointFull cannot find key:{act}", CLogManager.ELogLevel.Error);
+            CLogManager.LogError($"CAPRepo GetPointFull cannot find key:{act}");
             return -1;
         }
     }

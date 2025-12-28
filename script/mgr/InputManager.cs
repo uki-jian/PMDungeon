@@ -28,7 +28,7 @@ public class CInputManager : MonoBehaviour
                 CEntity entity = selectedObject.GetComponent<CEntity>();
                 if (entity == null)
                 {
-                    CLogManager.AddLog("select a gameobject with no CEntity base", CLogManager.ELogLevel.Warning);
+                    CLogManager.LogWarning("select a gameobject with no CEntity base");
                     break;
                 }
 

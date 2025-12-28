@@ -34,12 +34,12 @@ public class CTerrainCreator : MonoBehaviour
         if (m_materialList == null)
         {
             m_materialList = new List<Material>();
-            CLogManager.AddLog("没有添加m_materialList", CLogManager.ELogLevel.Error);
+            CLogManager.LogError("没有添加m_materialList");
         }
         if (m_spriteList == null)
         {
             m_spriteList = new List<Sprite>();
-            CLogManager.AddLog("没有添加m_spriteList", CLogManager.ELogLevel.Error);
+            CLogManager.LogError("没有添加m_spriteList");
         }
 
 
@@ -55,6 +55,10 @@ public class CTerrainCreator : MonoBehaviour
 
     public void generateGrids(CTerrainInfo info, out CTerrainEntity[,] gridList)
     {
+        // 预加载prefab，避免在循环中重复加载
+        GameObject slice_prefab = Resources.Load<GameObject>("prefab/gridSlice");
+        GameObject terrain_obj = GameObject.Find(CGlobal.GamePath.Terrain);
+        
         int width = info.m_size_x, height = info.m_size_z;
         float PNxStart = 17f, PNzStart = 11f;
         float PNxSampleRate = 16f, PNzSampleRate = 16f;
@@ -79,11 +83,12 @@ public class CTerrainCreator : MonoBehaviour
 
                 for (int i = 0/*Mathf.FloorToInt(yMin)*/; i <= 0/*Mathf.FloorToInt(y)*/; i++)
                 {
-                    GameObject instance = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                    GameObject instance = GameObject.CreatePrimitive(PrimitiveType.Cube);   
+                    instance.transform.SetParent(terrain_obj.transform);
                     CTerrainEntity grid = instance.AddComponent<CTerrainEntity>();
                     Vector3Int cellPos = new Vector3Int(x, i, z);
                     Vector3 worldPosition = CLevelManager.Grid3D.CellToWorld(cellPos);
-                    grid.Init(material, slicedSprite, cellPos);
+                    grid.Init(material, slicedSprite, cellPos, slice_prefab);
                     grid.Spawn(worldPosition);
 
                     if (terrainType == ETerrainType.TerrainType_Mount) grid.MovingCost = -1;

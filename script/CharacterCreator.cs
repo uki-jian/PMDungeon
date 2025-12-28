@@ -13,11 +13,11 @@ public class CCharacterCreator : MonoBehaviour
     void Init_test1(List<CCharacter> characterList, PriorityQueue<CActionInfo> actionQueue)
     {
         CCharacter zhongzi = GameObject.Find("Character/0001").GetComponent<CCharacter>();
-        zhongzi.Name = "ÃîÍÜÖÖ×Ó";
+        zhongzi.Name = "å¦™è›™ç§å­";
         zhongzi.Hp = 16;
         zhongzi.Dex = 10;
-        zhongzi.MoveRepo.UpdateMove(EMove.Tackle, new NSMove.CTackle()); //¸Ä¹¤³§Ä£Ê½
-        zhongzi.MoveRepo.UpdateMove(EMove.Ember, new NSMove.CEmber()); //¸Ä¹¤³§Ä£Ê½
+        zhongzi.MoveRepo.UpdateMove(EMove.Tackle, new NSMove.CTackle()); //ï¿½Ä¹ï¿½ï¿½ï¿½Ä£Ê½
+        zhongzi.MoveRepo.UpdateMove(EMove.Ember, new NSMove.CEmber()); //ï¿½Ä¹ï¿½ï¿½ï¿½Ä£Ê½
         //zhongzi.StatusRepo.UpdateStatue(EStatus.Type_GrassBug);
         zhongzi.ActRepo.UpdateRepoFull(EAction.Movement, CActionCreater.CreateAction(EAction.Movement, 9));
         zhongzi.ActRepo.UpdateRepoFull(EAction.Action, CActionCreater.CreateAction(EAction.Action, 1));
@@ -28,7 +28,7 @@ public class CCharacterCreator : MonoBehaviour
 
 
         CCharacter xiaolada = GameObject.Find("Character/0019").GetComponent<CCharacter>();
-        xiaolada.Name = "Ğ¡À­´ï";
+        xiaolada.Name = "å°æ‹‰è¾¾";
         xiaolada.Hp = 13;
         xiaolada.Dex = 9;
         xiaolada.MoveRepo.UpdateMove(EMove.Tackle, new NSMove.CTackle());

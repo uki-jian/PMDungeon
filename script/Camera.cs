@@ -3,15 +3,15 @@ using System;
 
 public class CCameraManager : MonoBehaviour, IPipe
 {
-    // Ïà»úÒÆ¶¯ËÙ¶È
+    // ç›¸æœºç§»åŠ¨é€Ÿåº¦
     public float m_moveSpeed = 80f;
-    // Ïà»úĞı×ªËÙ¶È
+    // ç›¸æœºæ—‹è½¬é€Ÿåº¦
     public float m_rotateSpeed = 2f;
-    // Ïà»úËõ·ÅËÙ¶È
+    // ç›¸æœºç¼©æ”¾é€Ÿåº¦
     public float m_zoomSpeed = 50f;
-    // Æ½»¬Ê±¼ä
+    // å¹³æ»‘æ—¶é—´
     public float m_smoothTime = 0.1f;
-    // Ä¬ÈÏÏà»ú¸ß¶È
+    // é»˜è®¤ç›¸æœºé«˜åº¦
     public float m_defaultCameraHeight = 5f;
 
     private Vector3 moveVelocity;
@@ -60,30 +60,30 @@ public class CCameraManager : MonoBehaviour, IPipe
         if (Physics.Raycast(ray, out hit))
         {
             targetPosition = hit.point;
-            //Debug.Log("½»µãÎ»ÖÃ: " + targetPosition);
+            //Debug.Log("äº¤ç‚¹ä½ç½®: " + targetPosition);
         }
         else
         {
             Func<float, Vector3> GetIntersectionPointWithPlane = (y) =>
             {
                 Vector3 origin = ray.origin;
-                // ÉäÏßµÄ·½ÏòÏòÁ¿
+                // å°„çº¿çš„æ–¹å‘å‘é‡
                 Vector3 direction = ray.direction;
 
-                // ¼ÆËã²ÎÊı t
+                // è®¡ç®—å‚æ•° t
                 float t = (y - origin.y) / direction.y;
 
-                // ¼ÆËã½»µã×ø±ê
+                // è®¡ç®—äº¤ç‚¹åæ ‡
                 Vector3 intersection = origin + t * direction;
 
                 return intersection;
             };
             targetPosition = GetIntersectionPointWithPlane(1f);
-            //Debug.Log("ÉäÏßÎ´ÓëÎïÌåÏà½»" + targetPosition);
+            //Debug.Log("å°„çº¿æœªä¸ç‰©ä½“ç›¸äº¤" + targetPosition);
         }
         transform.RotateAround(targetPosition, axis * rotateDir, m_rotateSpeed * Time.deltaTime);
 
-        // »Ö¸´Ïà»úµÄ Y ×ø±ê£¬È·±£¸ß¶È²»±ä
+        // æ¢å¤ç›¸æœºçš„ Y åæ ‡ï¼Œç¡®ä¿é«˜åº¦ä¸å˜
         //transform.position = new Vector3(transform.position.x, originalY, transform.position.z);
     }
     void Update()

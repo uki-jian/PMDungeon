@@ -35,11 +35,11 @@ public class CBurn : CStatus, IStatus
     }
     public void OnEnter()
     {
-        CLogManager.AddLog($"{m_obj.Name}陷入了{m_name}状态");
+        CLogManager.LogInfo($"{m_obj.Name}陷入了{m_name}状态");
     }
     public void OnExit()
     {
-        CLogManager.AddLog($"{m_obj.Name}解除了{m_name}状态");
+        CLogManager.LogInfo($"{m_obj.Name}解除了{m_name}状态");
     }
     public void OnUpdate()
     {
@@ -56,8 +56,8 @@ public class CBurn : CStatus, IStatus
 
         m_obj.Hp -= 2;
         m_remain_turn--;
-        CLogManager.AddLog($"{m_obj.Name}由于{m_name}状态，受到了{2}点伤害，剩余{m_obj.Hp}HP");
-        CLogManager.AddLog($"{m_name}状态还剩{m_remain_turn}回合");
+        CLogManager.LogInfo($"{m_obj.Name}由于{m_name}状态，受到了{2}点伤害，剩余{m_obj.Hp}HP");
+        CLogManager.LogInfo($"{m_name}状态还剩{m_remain_turn}回合");
     }
     public void Refresh()
     {

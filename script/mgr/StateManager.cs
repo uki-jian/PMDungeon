@@ -41,18 +41,18 @@ public class CStateManager : MonoBehaviour //special
         {
             if (!stateMap.ContainsKey(currentState))
             {
-                CLogManager.AddLog($"不存在{currentState}状态!", CLogManager.ELogLevel.Error);
+                CLogManager.LogError($"不存在{currentState}状态!");
                 return;
             }
             if (stateMap[currentState].Contains(value))
             {
-                CLogManager.AddLog($"从{currentState}{value}状态", CLogManager.ELogLevel.Debug);
+                CLogManager.LogDebug($"从{currentState}{value}状态");
                 Transit(currentState, value);
                 currentState = value;
             }
             else
             {
-                CLogManager.AddLog($"{currentState}无法转换到{value}状态", CLogManager.ELogLevel.Warning);
+                CLogManager.LogWarning($"{currentState}无法转换到{value}状态");
             }
         }
     }
@@ -86,18 +86,18 @@ public class CState
         {
             if (!stateMap.ContainsKey(currentState))
             {
-                CLogManager.AddLog($"不存在{currentState}状态!", CLogManager.ELogLevel.Error);
+                CLogManager.LogError($"不存在{currentState}状态!");
                 return;
             }
             if (stateMap[currentState].Contains(value))
             {
-                CLogManager.AddLog($"从{currentState}转换到{value}状态", CLogManager.ELogLevel.Debug);
+                CLogManager.LogDebug($"从{currentState}转换到{value}状态");
                 Transit(currentState, value);
                 currentState = value;
             }
             else
             {
-                CLogManager.AddLog($"{currentState}无法转换到{value}状态", CLogManager.ELogLevel.Warning);
+                CLogManager.LogWarning($"{currentState}无法转换到{value}状态");
             }
         }
     }

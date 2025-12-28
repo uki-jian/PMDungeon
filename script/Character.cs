@@ -55,42 +55,42 @@ public class CCharacter : CEntity
     [SerializeField]
     int m_strength = 8;
     /// <summary>
-    /// Á¦Á¿
+    /// åŠ›é‡
     /// </summary>
     public int Str { get { return m_strength; } set { m_strength = value; } }
     [SerializeField]
     int m_dexterity = 8;
     /// <summary>
-    /// Ãô½İ
+    /// æ•æ·
     /// </summary>
     public int Dex { get { return m_dexterity; } set { m_dexterity = value; } }
     [SerializeField]
     int m_constitution = 8;
     /// <summary>
-    /// ÌåÁ¦
+    /// ä½“åŠ›
     /// </summary>
     public int Con { get { return m_constitution; } set { m_constitution = value; } }
     [SerializeField]
     int m_intelligence = 8;
     /// <summary>
-    /// ÖÇÁ¦
+    /// æ™ºåŠ›
     /// </summary>
     public int Int { get { return m_intelligence; } set { m_intelligence = value; } }
     [SerializeField]
     int m_wisdom = 8;
     /// <summary>
-    /// ¸ĞÖª
+    /// æ„ŸçŸ¥
     /// </summary>
     public int Wis { get { return m_wisdom; } set { m_wisdom = value; } }
     [SerializeField]
     int m_charisma = 8;
     /// <summary>
-    /// ÷ÈÁ¦
+    /// é­…åŠ›
     /// </summary>
     public int Cha { get { return m_charisma; } set { m_charisma = value; } }
 
     [SerializeField]
-    int m_team; //ËùÊô¶ÓÎé 0:×Ô¼º¶ÓÎé, 1:ÓÑ¾ü, other:µĞ¾ü
+    int m_team; //æ‰€å±é˜Ÿä¼ 0:è‡ªå·±é˜Ÿä¼, 1:å‹å†›, other:æ•Œå†›
     public int Team { get { return m_team; } set { m_team = value; } }
 
     public class CState
@@ -117,7 +117,7 @@ public class CCharacter : CEntity
                 }
                 else
                 {
-                    CLogManager.AddLog($"{m_currentState}ÎŞ·¨×ª»»µ½{value}×´Ì¬", CLogManager.ELogLevel.Warning);
+                    CLogManager.LogWarning($"{m_currentState}æ— æ³•è½¬æ¢åˆ°{value}çŠ¶æ€");
                 }
             }
         }
@@ -141,14 +141,14 @@ public class CCharacter : CEntity
     }
 
     [SerializeField]
-    CState m_state;//µ±Ç°×´Ì¬
+    CState m_state;//å½“å‰çŠ¶æ€
     public CState.EState State
     {
         get { return m_state.CurrentState; }
         set
         {
             if (m_state.CurrentState == value) return;
-            CLogManager.AddLog($"{Name}ÓÉ{m_state.CurrentState}×´Ì¬×ªÒÆµ½{value}×´Ì¬");
+            CLogManager.LogInfo($"{Name}ç”±{m_state.CurrentState}çŠ¶æ€è½¬ç§»åˆ°{value}çŠ¶æ€");
             m_state.CurrentState = value;
         }
     }
@@ -163,15 +163,19 @@ public class CCharacter : CEntity
         get { return m_pos; }
         set
         {
-            if(m_areaUpdater != null)
+            if (m_areaUpdater != null)
             {
                 m_areaUpdater.UpdateCharacterArea(this, m_pos, false);
-                m_areaUpdater.UpdateCharacterArea(this, value, true);
             }
             m_pos = value;
+            if (m_areaUpdater != null)
+            {
+                m_areaUpdater.UpdateCharacterArea(this, value, true);
+                m_areaUpdater.UpdateMoveableArea(this);//todo: if active
+            }
         }
     }
-    Vector3Int m_posTarget; //Ä¿±êÎ»ÖÃ
+    Vector3Int m_posTarget; //ç›®æ ‡ä½ç½®
 
     IAreaUpdater m_areaUpdater;
     CTerrainEntity m_terrainOn;
@@ -193,7 +197,7 @@ public class CCharacter : CEntity
     {
         if (State != CState.EState.Act_Enabled)
         {
-            //CLogManager.AddLog($"{m_name}´¦ÓÚ{M_state}×´Ì¬£¬ÎŞ·¨ÒÆ¶¯£¡");
+            //CLogManager.AddLog($"{m_name}å¤„äº{M_state}çŠ¶æ€ï¼Œæ— æ³•ç§»åŠ¨ï¼");
             return false;
         }
         if (target == Pos)
@@ -205,19 +209,19 @@ public class CCharacter : CEntity
         int rest_movement = m_actRepo.GetRestPoint(EAction.Movement);
         if (rest_movement == int.MinValue)
         {
-            CLogManager.AddLog($"{Name}µÄm_APRepoÃ»ÓĞ{EAction.Movement}ÊôĞÔ", CLogManager.ELogLevel.Error);
+            CLogManager.LogError($"{Name}çš„m_APRepoæ²¡æœ‰{EAction.Movement}å±æ€§");
             return false;
         }
         if (dist > rest_movement)
         {
-            CLogManager.AddLog($"{Name}³¬³öÒÆ¶¯¾àÀë£¬ÒÆ¶¯¾àÀë{dist}£¬Ê£Óà{rest_movement}", CLogManager.ELogLevel.Error);
+            CLogManager.LogError($"{Name}è¶…å‡ºç§»åŠ¨è·ç¦»ï¼Œç§»åŠ¨è·ç¦»{dist}ï¼Œå‰©ä½™{rest_movement}");
             return false;
         }
         m_actRepo.Consume(EAction.Movement, dist);
 
         m_posTarget = target;
         //gameObject.transform.position = CLevelManager.m_grid.CellToWorld(m_pos);
-        CLogManager.AddLog($"{Name}ÒÆ¶¯µ½ÁË({Pos.x},{Pos.z})£¬ÒÆ¶¯¾àÀë{dist}£¬Ê£Óà{rest_movement-dist}");
+        CLogManager.LogInfo($"{Name}ç§»åŠ¨åˆ°äº†({Pos.x},{Pos.z})ï¼Œç§»åŠ¨è·ç¦»{dist}ï¼Œå‰©ä½™{rest_movement-dist}");
         State = CState.EState.Act_Enabled_Animating;
 
         return true;
@@ -235,11 +239,32 @@ public class CCharacter : CEntity
         {
             return false;
         }
-        m_Shadow = Instantiate(gameObject);
+        
+        // åˆ›å»ºä¸€ä¸ªæ–°çš„GameObjectï¼ŒåªåŒ…å«SpriteRendererç»„ä»¶
+        m_Shadow = new GameObject("shadow");
         m_Shadow.transform.position = CLevelManager.Grid3D.CellToWorld(target) + m_posOffset;
-        m_Shadow.GetComponent<SpriteRenderer>().material.color = new Color(1f, 1f, 1f, 0.3f);
-        m_Shadow.GetComponent<CCharacter>().enabled = false;
-        m_Shadow.GetComponent<BoxCollider>().enabled = false;
+        m_Shadow.transform.rotation = transform.rotation;
+        m_Shadow.transform.localScale = transform.localScale;
+        m_Shadow.transform.SetParent(gameObject.transform);
+        
+        // è·å–åŸå§‹å¯¹è±¡çš„SpriteRenderer
+        SpriteRenderer originalRenderer = GetComponent<SpriteRenderer>();
+        if (originalRenderer == null)
+        {
+            Destroy(m_Shadow);
+            return false;
+        }
+        
+        // æ·»åŠ SpriteRendererç»„ä»¶å¹¶å¤åˆ¶å±æ€§
+        SpriteRenderer shadowRenderer = m_Shadow.AddComponent<SpriteRenderer>();
+        shadowRenderer.sprite = originalRenderer.sprite;
+        //shadowRenderer.material = originalRenderer.material; //use default material
+        shadowRenderer.color = new Color(1f, 1f, 1f, 0.3f);
+        shadowRenderer.sortingLayerID = originalRenderer.sortingLayerID;
+        shadowRenderer.sortingOrder = originalRenderer.sortingOrder;
+        shadowRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+        shadowRenderer.receiveShadows = false;
+
         return true;
     }
     public void RemoveShadow()
@@ -267,7 +292,7 @@ public class CCharacter : CEntity
     public bool InBattle { get { return m_inBattle; } }
 
     [SerializeField]
-    float m_moveSpeed = 5f; //sprite×ß¸ñ×ÓµÄËÙ¶È
+    float m_moveSpeed = 5f; //spriteèµ°æ ¼å­çš„é€Ÿåº¦
 
     public CCharacter()
     {
@@ -315,7 +340,7 @@ public class CCharacter : CEntity
     }
     public void Spawn(Vector3Int pos)
     {
-        CLogManager.AddLog($"{Name}³öÏÖÁË£¡");
+        CLogManager.LogInfo($"{Name}å‡ºç°äº†ï¼");
         Pos = pos;
         m_posTarget = pos;
         transform.position = CLevelManager.Grid3D.CellToWorld(m_pos) + m_posOffset;
@@ -327,7 +352,7 @@ public class CCharacter : CEntity
         {
             return;
         }
-        CLogManager.AddLog($"{Name}µ¹ÏÂÁË£¡");
+        CLogManager.LogInfo($"{Name}å€’ä¸‹äº†ï¼");
         State = CState.EState.Act_Disabled;
         m_areaUpdater.UpdateCharacterArea(this, Pos, false);
         m_live = false;
@@ -341,18 +366,18 @@ public class CCharacter : CEntity
         }
         if (obj == null || !obj.m_live)
         {
-            CLogManager.AddLog($"{Name}¶Ô²»´æÔÚµÄ¶ÔÏóÊ¹ÓÃÁËÕĞÊ½£¡");
+            CLogManager.LogInfo($"{Name}å¯¹ä¸å­˜åœ¨çš„å¯¹è±¡ä½¿ç”¨äº†æ‹›å¼ï¼");
             return;
         }
         if (m_moveRepo == null)
         {
-            CLogManager.AddLog($"{Name}Ã»ÓĞm_moveRepo£¡", CLogManager.ELogLevel.Error);
+            CLogManager.LogError($"{Name}æ²¡æœ‰m_moveRepoï¼");
             return;
         }
         IMove move;
         if (!m_moveRepo.GetMove(slot, out move))
         {
-            CLogManager.AddLog($"{Name}Ê¹ÓÃÁË²»´æÔÚµÄÕĞÊ½{slot}£¡");
+            CLogManager.LogInfo($"{Name}ä½¿ç”¨äº†ä¸å­˜åœ¨çš„æ‹›å¼{slot}ï¼");
             return;
         }
         m_moveRepo.OnAttack(this, obj, slot, new CMoveExtraInfo());
@@ -362,8 +387,9 @@ public class CCharacter : CEntity
     {
         m_uiActionResource.OnUIShow(m_actRepo);//debug
         m_uiMovePanel.OnUIShow(m_moveRepo);
-        //CLogManager.AddLog($"Ñ¡ÔñÁË{Name}", CLogManager.ELogLevel.Debug);
+        //CLogManager.AddLog($"é€‰æ‹©äº†{Name}", CLogManager.ELogLevel.Debug);
         State = CState.EState.Act_Enabled;
+        m_areaUpdater.UpdateMoveableArea(this);
     }
     
     public void OnTurnStarts()

@@ -8,6 +8,7 @@ static public class CGlobal
         static public string ActionQueue = "UI/Canvas/actionQueue";
         static public string MovePanel = "UI/Canvas/movePanel";
         static public string ActionResource = "UI/Canvas/actionResource";
+        static public string Terrain = "Terrain";
     }
     static public class ResPath
     {
@@ -22,7 +23,15 @@ static public class CGlobal
         static public string Icon_Movement = "icon/Movement";
         static public string Icon_Movement_used = "icon/Movement_used";
 
-        static public string Move_Tackle = "move/tackle";
-        static public string Move_Ember = "move/ember";
+        static public string Move_Tackle = "move/icon/tackle";
+        static public string Move_Ember = "move/icon/ember";
+
+        // 音效路径
+        static public string Move_Sound_Tackle_Attack = "move/sound/tackle";
+        static public string Move_Sound_Ember_Attack = "move/sound/ember_attack";
+        static public string Move_Sound_Ember_Hit = "move/sound/ember_hit";
+        
+        // 动画预制体路径
+        static public string Move_Prefab_Ember = "prefab/move/ember";
     }
 }

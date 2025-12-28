@@ -14,11 +14,16 @@ public class CUIActionQueue : MonoBehaviour, IUIActionQueue
 
     void Start()
     {
-        queue = GameObject.Find(CGlobal.GamePath.Director).GetComponent<CLevelManager>();
+        queue = GameObject.Find(CGlobal.GamePath.Director)?.GetComponent<CLevelManager>();
+        if (queue == null)
+        {
+            CLogManager.LogWarning($"CUIActionQueue: Cannot find director at path {CGlobal.GamePath.Director} in Start()");
+        }
         actionButton = Resources.Load<GameObject>(CGlobal.ResPath.Prefab_Button_ActionQueue);
         btnList = new List<GameObject>();
         gameObject.SetActive(false);
-        OnUIShow();//debug
+        // 延迟调用 OnUIShow，确保 CLevelManager 已经初始化完成
+        OnUIShow();
     }
     [ContextMenu("TEST_ADD")]
     void testAdd()
@@ -36,7 +41,7 @@ public class CUIActionQueue : MonoBehaviour, IUIActionQueue
         foreach (GameObject obj in btnList) Destroy(obj);
         btnList.Clear();
 
-        int displayNum = (int)Math.Min(queue.ActionQueue.Count, displayMaxNum); //����ʾ��
+        int displayNum = (int)Math.Min(queue.ActionQueue.Count, displayMaxNum); //����ʾ��
         float x = GetComponent<RectTransform>().rect.position.x;
         float y = GetComponent<RectTransform>().rect.position.y;
         float width = GetComponent<RectTransform>().rect.width;

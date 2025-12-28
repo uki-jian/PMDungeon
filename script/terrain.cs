@@ -14,7 +14,7 @@ public class CTerrainEntity : CEntity
     CStatusRepo m_statusRepo;
     public CStatusRepo StatusRepo { get { return m_statusRepo; } }
     [SerializeField]
-    int m_moveCost = 1; //-1 for unstandable
+    int m_moveCost = 1; //-1 for unstandable todo:ä¸åŒå¯¹è±¡çš„ç§»åŠ¨ç‡ä¸åŒ
     public int MovingCost { get { return m_moveCost; } set { m_moveCost = value; } }
 
     Material m_material;
@@ -35,7 +35,7 @@ public class CTerrainEntity : CEntity
         public void Render()
         {
             Color color = Color_Common;
-            //Ë³Ğò¾ö¶¨ÏÔÊ¾µÄÑÕÉ«
+            //é¡ºåºå†³å®šæ˜¾ç¤ºçš„é¢œè‰²
             do
             {
                 if ((m_status & (uint)ETerrainStatus.Attackarea) > 0)
@@ -84,15 +84,16 @@ public class CTerrainEntity : CEntity
         {
             m_obj.SetActive(false);
         }
+        static byte color_a = 200;
         static Vector3 pos_offset = new Vector3(0f, 0.6f, 0f);
         static Vector3 scale = new Vector3(0.9f, 0.05f, 0.9f);
-        static public Color Color_Common = new Color32(0, 117, 255, 175);
-        static public Color Color_MyTeam = new Color32(39, 255, 0, 175);
+        static public Color Color_Common = new Color32(0, 117, 255, color_a);
+        static public Color Color_MyTeam = new Color32(39, 255, 0, color_a);
         static public Color Color_Allay = new Color32();
-        static public Color Color_Enemy = new Color32(255, 0, 0, 175);
-        static public Color Color_Moveable = new Color(1f, 0f, 0.9289f, 0.6862f);
-        static public Color Color_AttackAble = new Color32(230, 255, 0, 175);
-        static public Color Color_AttackArea = new Color32(230, 0, 255, 175);
+        static public Color Color_Enemy = new Color32(255, 0, 0, color_a);
+        static public Color Color_Moveable = new Color32(117, 117, 255, color_a);
+        static public Color Color_AttackAble = new Color32(230, 255, 0, color_a);
+        static public Color Color_AttackArea = new Color32(230, 0, 255, color_a);
     }
     public enum ETerrainStatus
     {
@@ -113,28 +114,27 @@ public class CTerrainEntity : CEntity
         get { return m_characterOn; }
         set
         {
-            //if (value) CLogManager.AddLog($"{value.Name}ÔÚ({m_pos.x},{m_pos.z})");
-            //else CLogManager.AddLog($"{m_characterOn.Name}Àë¿ªÁË({m_pos.x},{m_pos.z})");
+            //if (value) CLogManager.AddLog($"{value.Name}åœ¨({m_pos.x},{m_pos.z})");
+            //else CLogManager.AddLog($"{m_characterOn.Name}ç¦»å¼€äº†({m_pos.x},{m_pos.z})");
             m_characterOn = value;
         }
     }
 
-    public void Init(Material material, Sprite slicedSprite, Vector3Int cellPos)//todo:¸ÄÓÃprefab
+    public void Init(Material material, Sprite slicedSprite, Vector3Int cellPos, GameObject slice_prefab)
     {
         m_gridSlice = new CGridSlice();
 
         m_material = material;
         m_slicedSprite = slicedSprite;
         m_pos = cellPos;
-        GameObject slice_prefab = Resources.Load<GameObject>("prefab/gridSlice");
         m_gridSlice.Init(slice_prefab, transform);
     }
     public void Spawn(Vector3 position)
     {
-        // »ñÈ¡Á¢·½ÌåµÄMeshRenderer×é¼ş£¬ÓÃÓÚäÖÈ¾Á¢·½Ìå
+        // è·å–ç«‹æ–¹ä½“çš„MeshRendererç»„ä»¶ï¼Œç”¨äºæ¸²æŸ“ç«‹æ–¹ä½“
         MeshRenderer meshRenderer = gameObject.GetComponent<MeshRenderer>();
 
-        // ´´½¨Ò»¸öĞÂµÄ²ÄÖÊ
+        // åˆ›å»ºä¸€ä¸ªæ–°çš„æè´¨
         //Material material = new Material(Shader.Find("Standard"));
 
 
@@ -151,19 +151,19 @@ public class CTerrainEntity : CEntity
         MeshFilter meshFilter = gameObject.GetComponent<MeshFilter>();
         Mesh mesh = meshFilter.mesh;
 
-        // Á¢·½ÌåÃ¿¸öÃæµÄ¶¥µãË÷Òı
+        // ç«‹æ–¹ä½“æ¯ä¸ªé¢çš„é¡¶ç‚¹ç´¢å¼•
         int[][] faceIndices = new int[6][]
         {
-            new int[] { 0, 1, 2, 3 }, // Ç°Ãæ
-            new int[] { 5, 4, 7, 6 }, // ºóÃæ
-            new int[] { 3, 2, 6, 7 }, // ¶¥Ãæ
-            new int[] { 4, 5, 1, 0 }, // µ×Ãæ
-            new int[] { 4, 0, 3, 7 }, // ×óÃæ
-            new int[] { 1, 5, 6, 2 }  // ÓÒÃæ
+            new int[] { 0, 1, 2, 3 }, // å‰é¢
+            new int[] { 5, 4, 7, 6 }, // åé¢
+            new int[] { 3, 2, 6, 7 }, // é¡¶é¢
+            new int[] { 4, 5, 1, 0 }, // åº•é¢
+            new int[] { 4, 0, 3, 7 }, // å·¦é¢
+            new int[] { 1, 5, 6, 2 }  // å³é¢
         };
 
         Vector2[] newUV = new Vector2[mesh.uv.Length];
-        // ¸üĞÂÃ¿¸öÃæµÄUV×ø±ê
+        // æ›´æ–°æ¯ä¸ªé¢çš„UVåæ ‡
         for (int i = 0; i < mesh.uv.Length; i++)
         {
             if (mesh.uv[i].x == 0f)
@@ -186,13 +186,13 @@ public class CTerrainEntity : CEntity
         }
         mesh.uv = newUV;
 
-        // ½«Ö¸¶¨µÄÌùÍ¼¸³Öµ¸ø²ÄÖÊµÄÖ÷ÎÆÀí
+        // å°†æŒ‡å®šçš„è´´å›¾èµ‹å€¼ç»™æè´¨çš„ä¸»çº¹ç†
         m_material.mainTexture = texture;
 
-        // ½«ĞÂ´´½¨µÄ²ÄÖÊ¸³Öµ¸øÁ¢·½ÌåµÄMeshRenderer×é¼ş
+        // å°†æ–°åˆ›å»ºçš„æè´¨èµ‹å€¼ç»™ç«‹æ–¹ä½“çš„MeshRendererç»„ä»¶
         meshRenderer.material = m_material;
 
-        // ÉèÖÃÁ¢·½ÌåµÄÎ»ÖÃ
+        // è®¾ç½®ç«‹æ–¹ä½“çš„ä½ç½®
         gameObject.transform.position = position;
         gameObject.transform.localScale = Vector3.one;
         //cube.transform.rotation = Quaternion.Euler(new Vector3(45, 45, 45));
@@ -206,7 +206,7 @@ public class CTerrainEntity : CEntity
     }
     public override void OnSelected()
     {
-        //CLogManager.AddLog($"Ñ¡ÔñÁË{gameObject.name}", CLogManager.ELogLevel.Debug);
+        //CLogManager.AddLog($"é€‰æ‹©äº†{gameObject.name}", CLogManager.ELogLevel.Debug);
     }
 
     public void AddTerrainStatus(ETerrainStatus status)

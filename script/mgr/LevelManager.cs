@@ -51,7 +51,7 @@ public class CLevelManager : MonoBehaviour, IPipe, IActionQueue, IAreaUpdater, I
         CActionInfo current = m_actionQueue.Top;
         current.Obj.OnTurnStarts();
 
-        CLogManager.AddLog($"由{previous.Obj.Name}的第{previous.Turn}次行动，切换至{current.Obj.Name}的第{current.Turn}次行动");
+        CLogManager.LogInfo($"由{previous.Obj.Name}的第{previous.Turn}次行动，切换至{current.Obj.Name}的第{current.Turn}次行动");
         m_uiActionQueue.OnUIUpdate();
     }
     /// <summary>
@@ -101,11 +101,11 @@ public class CLevelManager : MonoBehaviour, IPipe, IActionQueue, IAreaUpdater, I
             //value.OnActive();
             if (value == null)
             {
-                CLogManager.AddLog("现在没有人行动");
+                CLogManager.LogInfo("现在没有人行动");
             }
             else
             {
-                CLogManager.AddLog($"现在{value.Name}开始行动了");
+                CLogManager.LogInfo($"现在{value.Name}开始行动了");
             }
             m_activeCharacter = value;
         }
@@ -122,7 +122,7 @@ public class CLevelManager : MonoBehaviour, IPipe, IActionQueue, IAreaUpdater, I
         if (m_terrainCreator == null)
         {
             gameObject.AddComponent<CTerrainCreator>();
-            CLogManager.AddLog("没有添加CTerrainCreator", CLogManager.ELogLevel.Error);
+            CLogManager.LogError("没有添加CTerrainCreator");
         }
         CTerrainCreator.CTerrainInfo info = new CTerrainCreator.CTerrainInfo(m_xLen, m_zLen);
         m_terrainCreator.generateGrids(info, out m_terrainList);
@@ -131,7 +131,7 @@ public class CLevelManager : MonoBehaviour, IPipe, IActionQueue, IAreaUpdater, I
         if (m_characterCreator == null)
         {
             gameObject.AddComponent<CCharacterCreator>();
-            CLogManager.AddLog("没有添加CCharacterCreator", CLogManager.ELogLevel.Error);
+            CLogManager.LogError("没有添加CCharacterCreator");
         }
         m_characterCreator.Init(out m_characterList, out m_actionQueue);
         m_uiActionQueue = GameObject.Find(CGlobal.GamePath.ActionQueue).GetComponent<CUIActionQueue>();
@@ -195,7 +195,7 @@ public class CLevelManager : MonoBehaviour, IPipe, IActionQueue, IAreaUpdater, I
         {
             if (!(info is MessageInfo.CellPosition))
             {
-                CLogManager.AddLog("EMessageType.GetFocusCellPosition error info type", CLogManager.ELogLevel.Error);
+                CLogManager.LogError("EMessageType.GetFocusCellPosition error info type");
                 return;
             }
             MessageInfo.CellPosition cellPos = (MessageInfo.CellPosition)info;
@@ -205,7 +205,7 @@ public class CLevelManager : MonoBehaviour, IPipe, IActionQueue, IAreaUpdater, I
         {
             if (!(info is CEntity))
             {
-                CLogManager.AddLog("EMessageType.SetSelectedEntity error info type", CLogManager.ELogLevel.Error);
+                CLogManager.LogError("EMessageType.SetSelectedEntity error info type");
                 return;
             }
             SelectedEntity = (CEntity)info;
@@ -248,7 +248,7 @@ public class CLevelManager : MonoBehaviour, IPipe, IActionQueue, IAreaUpdater, I
                     else
                     {
                         Vector3Int pos = SelectedEntity.Pos;
-                        CLogManager.AddLog($"{ActiveCharacter.Name}无法移动到位置({pos.x}, {pos.z})", CLogManager.ELogLevel.Debug);
+                        CLogManager.LogDebug($"{ActiveCharacter.Name}无法移动到位置({pos.x}, {pos.z})");
                     }
                 }
             }
@@ -286,7 +286,11 @@ public class CLevelManager : MonoBehaviour, IPipe, IActionQueue, IAreaUpdater, I
                     ActiveCharacter.RemoveShadow();
                     return;
                 }
-
+                if (!IsGridStandable(((CTerrainEntity)info).Pos))
+                {
+                    //CLogManager.LogInfo($"pos({((CTerrainEntity)info).Pos.x}, {((CTerrainEntity)info).Pos.y})当前不可作为移动目的地");   
+                    return;
+                }
                 int rest_movement = ActiveCharacter.ActRepo.GetRestPoint(EAction.Movement);
                 List<Vector3Int> path = GetOptimalPath(ActiveCharacter.Pos, ((CTerrainEntity)info).Pos, rest_movement);
                 if (path.Count > 0)
@@ -313,7 +317,7 @@ public class CLevelManager : MonoBehaviour, IPipe, IActionQueue, IAreaUpdater, I
         }
         else
         {
-            CLogManager.AddLog("CLevelManager.TransferData No this action", CLogManager.ELogLevel.Error);
+            CLogManager.LogError("CLevelManager.TransferData No this action");
         }
     }
 
@@ -441,7 +445,7 @@ public class CLevelManager : MonoBehaviour, IPipe, IActionQueue, IAreaUpdater, I
         {
             if (terrain.CharacterOn != null)
             {
-                CLogManager.AddLog($"UpdateCharacterArea bind, ({pos.x},{pos.z})已经存在角色{terrain.CharacterOn.Name},{character.Name}无法进入", CLogManager.ELogLevel.Warning);
+                CLogManager.LogWarning($"UpdateCharacterArea bind, ({pos.x},{pos.z})已经存在角色{terrain.CharacterOn.Name},{character.Name}无法进入");
                 return;
             }
             terrain.CharacterOn = character;
@@ -457,7 +461,7 @@ public class CLevelManager : MonoBehaviour, IPipe, IActionQueue, IAreaUpdater, I
         {
             if (terrain.CharacterOn && terrain.CharacterOn != character)
             {
-                CLogManager.AddLog($"UpdateCharacterArea unbind, ({pos.x},{pos.z})上的角色并不是{character.Name},而是{terrain.CharacterOn.Name}", CLogManager.ELogLevel.Warning);
+                CLogManager.LogWarning($"UpdateCharacterArea unbind, ({pos.x},{pos.z})上的角色并不是{character.Name},而是{terrain.CharacterOn.Name}");
                 return;
             }
             terrain.CharacterOn = null;
@@ -469,16 +473,18 @@ public class CLevelManager : MonoBehaviour, IPipe, IActionQueue, IAreaUpdater, I
                 terrain.RemoveTerrainStatus(CTerrainEntity.ETerrainStatus.Enemy);
         }
     }
-    public void UpdateMoveableArea()
+    public void UpdateMoveableArea(CCharacter character)
     {
-        if (!ActiveCharacter) return;
+        CLogManager.LogInfo("UpdateMoveableArea");
+        if (!character) return;
         ClearAllArea(CTerrainEntity.ETerrainStatus.Moveable);
-        int rest_movement = ActiveCharacter.ActRepo.GetRestPoint(EAction.Movement);
-        List<CTerrainEntity> area = GetArea(ActiveCharacter.Pos, new Vector3Int(int.MaxValue, int.MaxValue, int.MaxValue), rest_movement);
+        int rest_movement = character.ActRepo.GetRestPoint(EAction.Movement);
+        List<CTerrainEntity> area = GetArea(character.Pos, new Vector3Int(int.MaxValue, int.MaxValue, int.MaxValue), rest_movement);
         
         foreach (CTerrainEntity terrain in area)
         {
-            terrain.AddTerrainStatus(CTerrainEntity.ETerrainStatus.Moveable);
+            if (IsGridStandable(terrain.Pos))
+                terrain.AddTerrainStatus(CTerrainEntity.ETerrainStatus.Moveable);
         }
     }
     public void UpdateAttackableArea(IMove move)
@@ -492,7 +498,7 @@ public class CLevelManager : MonoBehaviour, IPipe, IActionQueue, IAreaUpdater, I
             if (terrain != null)
                 terrain.AddTerrainStatus(CTerrainEntity.ETerrainStatus.Attackable);
         }
-        CLogManager.AddLog($"{ActiveCharacter.Name}准备使用{move.Name}");
+        CLogManager.LogInfo($"{ActiveCharacter.Name}准备使用{move.Name}");
     }
     public void UpdateAttackTargetArea(Vector3Int target, IMove move)
     {
@@ -513,12 +519,30 @@ public class CLevelManager : MonoBehaviour, IPipe, IActionQueue, IAreaUpdater, I
             terrain.RemoveTerrainStatus(status);
         }
     }
+    public bool IsGridStandable(Vector3Int targetPos)
+    {
+        if (GetTerrainEntity(targetPos).MovingCost == -1)
+        {
+            //CLogManager.LogInfo("该位置不可停留");
+            return false;
+        }
+        foreach(CCharacter character in m_characterList)
+        {
+            if (character.Pos == targetPos)
+            {
+                //CLogManager.LogInfo("该位置已经有其他角色");
+                return false;
+            }
+        }
+
+        return true;
+    }
 }
 public interface IAreaUpdater
 {
     void UpdateCharacterArea(CCharacter character, Vector3Int pos, bool bind);
-    void UpdateMoveableArea();
-    void UpdateAttackableArea(IMove move);
+    void UpdateMoveableArea(CCharacter character);
+    void UpdateAttackableArea(IMove move);//修改输入character
     void UpdateAttackTargetArea(Vector3Int target, IMove move);
     void ClearAllArea(CTerrainEntity.ETerrainStatus status = CTerrainEntity.ETerrainStatus.Common);
 }
